@@ -68,24 +68,23 @@
       <div class="modal-content" id="modal-content"></div>
     </div>
 
-    <!-- Background Audio -->
-    <audio id="bg-audio" loop>
-      <source src="/assets/bg-music.mp3" type="audio/mpeg">
-    </audio>
-
-    <!-- Floating Music Player -->
-    <div id="music-player" class="music-player">
-      <button id="music-toggle" class="music-btn" title="Toggle music">
-        <span id="music-icon">🎵</span>
-      </button>
-      <div class="music-info" id="music-info">
-        <span class="music-bars">
-          <span></span><span></span><span></span><span></span>
-        </span>
-        <span class="music-label">Playing for you 💛</span>
+    <!-- Official audio-only player. Browsers may require a tap before playback. -->
+    <details class="music-player" open>
+      <summary>🎵 Remember — Asake <span class="music-chevron" aria-hidden="true">⌃</span></summary>
+      <div class="music-panel">
+        <p>A song for you 💛 Tap play if the music hasn't started.</p>
+        <iframe
+          title="Remember by Asake — audio player"
+          src="https://audiomack.com/embed/asakemusic/song/remember?autoplay=1"
+          allow="autoplay"
+          width="100%"
+          height="200"
+          class="music-embed"
+        ></iframe>
+        <a href="https://audiomack.com/asakemusic/song/remember" target="_blank" rel="noopener noreferrer">Open song on Audiomack</a>
       </div>
-    </div>
-    
+    </details>
+
     <script type="module" src="/main.js"></script>
   </body>
 </html>
