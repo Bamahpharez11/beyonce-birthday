@@ -245,3 +245,206 @@ assets.forEach((asset, index) => {
   observer.observe(item);
 });
 
+
+// ============================================================
+// SPECIAL EFFECTS
+// ============================================================
+
+// --- A. Cursor Sparkle Trail ---
+const sparkleCanvas = document.getElementById('sparkle-canvas');
+const sCtx = sparkleCanvas.getContext('2d');
+sparkleCanvas.width = window.innerWidth;
+sparkleCanvas.height = window.innerHeight;
+sparkleCanvas.classList.add('active');
+
+let sparkles = [];
+window.addEventListener('mousemove', (e) => {
+  for (let i = 0; i < 3; i++) {
+    sparkles.push({
+      x: e.clientX + (Math.random() - 0.5) * 20,
+      y: e.clientY + (Math.random() - 0.5) * 20,
+      size: Math.random() * 6 + 2,
+      alpha: 1,
+      color: Math.random() > 0.5 ? '#d4af37' : '#e8b4b8',
+      vx: (Math.random() - 0.5) * 2,
+      vy: -(Math.random() * 2 + 1),
+    });
+  }
+});
+
+function animateSparkles() {
+  sCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+  sparkles = sparkles.filter(s => s.alpha > 0.01);
+  sparkles.forEach(s => {
+    s.x += s.vx;
+    s.y += s.vy;
+    s.alpha -= 0.04;
+    s.size *= 0.95;
+    sCtx.save();
+    sCtx.globalAlpha = s.alpha;
+    sCtx.fillStyle = s.color;
+    sCtx.shadowBlur = 8;
+    sCtx.shadowColor = s.color;
+    sCtx.beginPath();
+    // Draw a little star
+    for (let i = 0; i < 5; i++) {
+      const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+      const r = i % 2 === 0 ? s.size : s.size / 2;
+      i === 0 ? sCtx.moveTo(s.x + r * Math.cos(angle), s.y + r * Math.sin(angle))
+              : sCtx.lineTo(s.x + r * Math.cos(angle), s.y + r * Math.sin(angle));
+    }
+    sCtx.closePath();
+    sCtx.fill();
+    sCtx.restore();
+  });
+  requestAnimationFrame(animateSparkles);
+}
+animateSparkles();
+
+window.addEventListener('resize', () => {
+  sparkleCanvas.width = window.innerWidth;
+  sparkleCanvas.height = window.innerHeight;
+});
+
+
+// --- B. Confetti Explosion ---
+function launchConfetti() {
+  const colors = ['#d4af37', '#e8b4b8', '#ff8fab', '#fff', '#c084fc', '#67e8f9'];
+  for (let i = 0; i < 160; i++) {
+    const confetti = document.createElement('div');
+    confetti.style.cssText = `
+      position: fixed;
+      width: ${Math.random() * 10 + 6}px;
+      height: ${Math.random() * 6 + 4}px;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      left: ${Math.random() * 100}vw;
+      top: -10px;
+      border-radius: 2px;
+      z-index: 99999;
+      pointer-events: none;
+      opacity: 1;
+      transform: rotate(${Math.random() * 360}deg);
+    `;
+    document.body.appendChild(confetti);
+    const duration = Math.random() * 2000 + 1500;
+    const xDrift = (Math.random() - 0.5) * 300;
+    confetti.animate([
+      { transform: `translateY(0) translateX(0) rotate(0deg)`, opacity: 1 },
+      { transform: `translateY(110vh) translateX(${xDrift}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+    ], { duration, easing: 'cubic-bezier(0.25,0.46,0.45,0.94)', fill: 'forwards' })
+      .onfinish = () => confetti.remove();
+  }
+}
+
+
+// --- C. Floating Hearts ---
+function spawnHeart(x, y) {
+  const hearts = ['💖', '💕', '💗', '💓', '💝', '💘'];
+  const el = document.createElement('div');
+  el.className = 'floating-heart';
+  el.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+  el.style.left = `${x + (Math.random() - 0.5) * 60}px`;
+  el.style.top = `${y}px`;
+  el.style.fontSize = `${Math.random() * 1.5 + 1}rem`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+
+// Spawn hearts randomly while on the page
+setInterval(() => {
+  const x = Math.random() * window.innerWidth;
+  const y = Math.random() * window.innerHeight;
+  spawnHeart(x, y);
+}, 800);
+
+
+// --- D. Fleeing "No" Button & Yes response ---
+const yesBtn = document.getElementById('yes-btn');
+const noBtn = document.getElementById('no-btn');
+const loveResponse = document.getElementById('love-response');
+
+// Position No button absolutely inside its parent
+const loveSection = document.getElementById('love-section');
+
+// Track No button position (viewport coords)
+let noBtnX = null;
+let noBtnY = null;
+
+function initNoBtnPosition() {
+  const rect = noBtn.getBoundingClientRect();
+  noBtnX = rect.left;
+  noBtnY = rect.top;
+  // Switch to fixed positioning so it can roam freely
+  noBtn.style.position = 'fixed';
+  noBtn.style.left = noBtnX + 'px';
+  noBtn.style.top = noBtnY + 'px';
+  noBtn.style.zIndex = '9996';
+}
+
+observer.observe(document.getElementById('love-section'));
+
+// Initialize No button position once the section is visible
+const loveObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      setTimeout(initNoBtnPosition, 600); // wait for fade-in
+      loveObserver.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+loveObserver.observe(document.getElementById('love-section'));
+
+const FLEE_RADIUS = 130; // px — how close before it flees
+const FLEE_DISTANCE = 220; // px — how far it jumps
+
+document.addEventListener('mousemove', (e) => {
+  if (noBtnX === null) return;
+
+  const btnCenterX = noBtnX + noBtn.offsetWidth / 2;
+  const btnCenterY = noBtnY + noBtn.offsetHeight / 2;
+  const dx = e.clientX - btnCenterX;
+  const dy = e.clientY - btnCenterY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist < FLEE_RADIUS) {
+    // Flee in the opposite direction
+    const angle = Math.atan2(dy, dx);
+    const fleeAngle = angle + Math.PI + (Math.random() - 0.5) * 0.8;
+    let newX = noBtnX - Math.cos(fleeAngle) * FLEE_DISTANCE;
+    let newY = noBtnY - Math.sin(fleeAngle) * FLEE_DISTANCE;
+
+    // Keep within viewport
+    newX = Math.max(0, Math.min(window.innerWidth - noBtn.offsetWidth - 10, newX));
+    newY = Math.max(0, Math.min(window.innerHeight - noBtn.offsetHeight - 10, newY));
+
+    noBtnX = newX;
+    noBtnY = newY;
+    noBtn.style.left = noBtnX + 'px';
+    noBtn.style.top = noBtnY + 'px';
+  }
+});
+
+// Also flee on touch (mobile)
+document.addEventListener('touchmove', (e) => {
+  const touch = e.touches[0];
+  if (!touch || noBtnX === null) return;
+  const fakeEvent = { clientX: touch.clientX, clientY: touch.clientY };
+  document.dispatchEvent(new MouseEvent('mousemove', fakeEvent));
+}, { passive: true });
+
+// Yes button — big celebration
+yesBtn.addEventListener('click', (e) => {
+  launchConfetti();
+  // Spawn a burst of hearts from click point
+  for (let i = 0; i < 12; i++) {
+    setTimeout(() => spawnHeart(e.clientX, e.clientY), i * 80);
+  }
+  // Show the love response
+  loveResponse.textContent = '🥰 We knew it! We love you more, Beyonce! 💖';
+  loveResponse.classList.remove('hidden');
+  loveResponse.classList.add('show');
+  // Hide the buttons
+  yesBtn.style.transform = 'scale(1.3)';
+  yesBtn.style.boxShadow = '0 0 40px rgba(212,175,55,0.9)';
+  noBtn.style.display = 'none';
+});

@@ -13,6 +13,7 @@
   <body>
     <!-- Background Canvas for particles -->
     <canvas id="particles-canvas"></canvas>
+    <canvas id="sparkle-canvas"></canvas>
 
     <div class="app-container">
       
@@ -39,6 +40,20 @@
         <h2 class="gallery-title fade-in hidden">Beautiful Memories</h2>
         <div class="gallery-grid" id="gallery-container">
           <!-- Assets will be injected here via JavaScript -->
+        </div>
+      </section>
+
+      <!-- Love Question Section -->
+      <section class="love-section glass-panel fade-in hidden" id="love-section">
+        <div class="love-inner">
+          <div class="love-emoji-row" id="love-emoji-row">💖 💕 💖</div>
+          <h2 class="love-question">Do you love us?</h2>
+          <p class="love-subtext">Think carefully... 😏</p>
+          <div class="love-buttons">
+            <button id="yes-btn" class="love-btn yes-btn">YES! 💗</button>
+            <button id="no-btn" class="love-btn no-btn">No</button>
+          </div>
+          <div id="love-response" class="love-response hidden"></div>
         </div>
       </section>
 

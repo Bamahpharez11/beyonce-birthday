@@ -316,3 +316,127 @@ h1, h2 {
   color: rgba(255,255,255,0.6);
   letter-spacing: 2px;
 }
+
+/* Sparkle canvas overlay */
+#sparkle-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9998;
+  display: none;
+}
+
+#sparkle-canvas.active {
+  display: block;
+}
+
+/* Love Section */
+.love-section {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 4rem 3rem;
+  position: relative;
+  overflow: visible;
+}
+
+.love-emoji-row {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.love-question {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  margin-bottom: 0.75rem;
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.love-subtext {
+  font-size: 1.1rem;
+  font-weight: 300;
+  opacity: 0.7;
+  margin-bottom: 2.5rem;
+  font-style: italic;
+}
+
+.love-buttons {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  height: 80px;
+}
+
+.love-btn {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 1rem 2.5rem;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  letter-spacing: 1px;
+}
+
+.yes-btn {
+  background: linear-gradient(135deg, var(--accent-gold), #ff8fab);
+  color: #1a0a0a;
+  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4);
+}
+
+.yes-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 10px 36px rgba(212, 175, 55, 0.6);
+}
+
+.no-btn {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.5);
+  border: 1px solid rgba(255,255,255,0.15);
+  position: absolute; /* so it can be moved freely */
+  transition: none; /* no transition — instant escape */
+}
+
+/* Love response */
+.love-response {
+  margin-top: 2.5rem;
+  font-size: 1.8rem;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  color: var(--accent-gold);
+  animation: fadeInPop 0.5s ease;
+}
+
+@keyframes fadeInPop {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Floating hearts */
+.floating-heart {
+  position: fixed;
+  pointer-events: none;
+  font-size: 1.5rem;
+  animation: floatUp 2s ease-out forwards;
+  z-index: 9997;
+}
+
+@keyframes floatUp {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-200px) scale(0.5); }
+}
+
