@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Happy Birthday Beyonce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <!-- Background Canvas for particles -->
+    <canvas id="particles-canvas"></canvas>
+
+    <div class="app-container">
+      
+      <!-- Hero Section -->
+      <section class="hero glass-panel">
+        <h1 class="typing-container">
+          <span id="typing-text"></span><span class="cursor">|</span>
+        </h1>
+        <p class="subtitle fade-in hidden">To the most wonderful person in the world.</p>
+        <div class="scroll-indicator fade-in hidden">
+          <span>Scroll to celebrate</span>
+          <div class="arrow">↓</div>
+        </div>
+      </section>
+
+      <!-- Message Section -->
+      <section class="message-section glass-panel fade-in hidden">
+        <h2>You are so loved.</h2>
+        <p>Beyonce, this day is all about you. You bring so much light, beauty, and joy to my life and to everyone around you. I wanted to create something as excellent and thoughtful as you are to show you how dear you are to my heart.</p>
+      </section>
+
+      <!-- Gallery Section -->
+      <section class="gallery-section">
+        <h2 class="gallery-title fade-in hidden">Beautiful Memories</h2>
+        <div class="gallery-grid" id="gallery-container">
+          <!-- Assets will be injected here via JavaScript -->
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>Made with love 💖</p>
+      </footer>
+    </div>
+    
+    <!-- Modal for fullscreen images/videos -->
+    <div id="lightbox-modal" class="modal hidden">
+      <span class="close-modal" id="close-modal">&times;</span>
+      <div class="modal-content" id="modal-content"></div>
+    </div>
+    
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
