@@ -448,3 +448,64 @@ yesBtn.addEventListener('click', (e) => {
   yesBtn.style.boxShadow = '0 0 40px rgba(212,175,55,0.9)';
   noBtn.style.display = 'none';
 });
+
+
+// ============================================================
+// BACKGROUND MUSIC PLAYER
+// ============================================================
+const audio = document.getElementById('bg-audio');
+const musicToggle = document.getElementById('music-toggle');
+const musicIcon = document.getElementById('music-icon');
+const musicInfo = document.getElementById('music-info');
+const musicBars = musicInfo.querySelector('.music-bars');
+
+audio.volume = 0.35;
+let isPlaying = false;
+let infoTimeout;
+
+function setPlaying(play) {
+  isPlaying = play;
+  if (play) {
+    audio.play();
+    musicIcon.textContent = '🎵';
+    musicToggle.classList.add('spinning');
+    musicBars.classList.remove('paused');
+    // Show info panel
+    musicInfo.classList.add('visible');
+    clearTimeout(infoTimeout);
+    infoTimeout = setTimeout(() => musicInfo.classList.remove('visible'), 4000);
+  } else {
+    audio.pause();
+    musicIcon.textContent = '▶️';
+    musicToggle.classList.remove('spinning');
+    musicBars.classList.add('paused');
+    musicInfo.classList.remove('visible');
+  }
+}
+
+musicToggle.addEventListener('click', () => {
+  setPlaying(!isPlaying);
+});
+
+// Auto-start on first user interaction (browser policy requires this)
+const startOnInteraction = () => {
+  if (!isPlaying) setPlaying(true);
+  document.removeEventListener('click', startOnInteraction);
+  document.removeEventListener('keydown', startOnInteraction);
+  document.removeEventListener('touchstart', startOnInteraction);
+};
+document.addEventListener('click', startOnInteraction);
+document.addEventListener('keydown', startOnInteraction);
+document.addEventListener('touchstart', startOnInteraction, { passive: true });
+
+// Fade in the audio nicely
+audio.addEventListener('play', () => {
+  audio.volume = 0;
+  let vol = 0;
+  const fade = setInterval(() => {
+    vol = Math.min(vol + 0.02, 0.35);
+    audio.volume = vol;
+    if (vol >= 0.35) clearInterval(fade);
+  }, 60);
+});
+

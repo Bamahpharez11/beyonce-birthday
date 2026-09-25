@@ -67,6 +67,24 @@
       <span class="close-modal" id="close-modal">&times;</span>
       <div class="modal-content" id="modal-content"></div>
     </div>
+
+    <!-- Background Audio -->
+    <audio id="bg-audio" loop>
+      <source src="/assets/bg-music.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Floating Music Player -->
+    <div id="music-player" class="music-player">
+      <button id="music-toggle" class="music-btn" title="Toggle music">
+        <span id="music-icon">🎵</span>
+      </button>
+      <div class="music-info" id="music-info">
+        <span class="music-bars">
+          <span></span><span></span><span></span><span></span>
+        </span>
+        <span class="music-label">Playing for you 💛</span>
+      </div>
+    </div>
     
     <script type="module" src="/main.js"></script>
   </body>
