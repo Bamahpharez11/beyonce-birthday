@@ -80,6 +80,22 @@
     "type": "photo"
   },
   {
+    "src": "/memories/photo-21.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-22.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-23.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-24.webp",
+    "type": "photo"
+  },
+  {
     "src": "/memories/film-01.mp4",
     "poster": "/memories/film-01.webp",
     "type": "video"
