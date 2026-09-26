@@ -90,46 +90,83 @@ $('.envelope').addEventListener('click', () => {
 // All original memories, with lightweight previews and keyboard-accessible viewing.
 const captions = ['A little sunshine','Better together','That beautiful smile','Simply you','Our kind of happy','The silly days','My favorite moments','Always a little magic','A memory to keep','All the little things','A brighter day','Just being you'];
 const memories = media.map((item, id) => ({ ...item, id, caption: item.type === 'video' ? 'A moment in motion' : captions[id % captions.length] }));
-let filter = 'all', shown = 8, visibleMemories = memories, currentIndex = 0, lastTrigger;
-const gallery = $('#gallery'), more = $('#more-memories'), dialog = $('#lightbox');
+let filter = 'all', visibleMemories = memories, currentIndex = 0, lastTrigger;
+const gallery = $('#gallery'), dialog = $('#lightbox');
+const inViewVideos = new Set();
+function syncPreview(video) {
+  const shouldPlay = inViewVideos.has(video) && !document.hidden && !dialog.open;
+  video.muted = true;
+  if (!shouldPlay) { video.pause(); return; }
+  if (!video.getAttribute('src')) video.src = video.dataset.src;
+  video.play().then(() => {
+    if (!inViewVideos.has(video) || document.hidden || dialog.open) video.pause();
+  }).catch(() => { /* The poster remains available if playback is restricted. */ });
+}
+function syncPreviews() { gallery.querySelectorAll('video').forEach(syncPreview); }
+const videoObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && entry.intersectionRatio >= .3) inViewVideos.add(entry.target);
+    else inViewVideos.delete(entry.target);
+    syncPreview(entry.target);
+  });
+}, { threshold: [0, .3] });
+document.addEventListener('visibilitychange', () => {
+  syncPreviews();
+  if (document.hidden) $('.dialog-media video')?.pause();
+});
 function renderGallery() {
   visibleMemories = memories.filter(item => filter === 'all' || item.type === filter);
+  gallery.querySelectorAll('video').forEach(video => video.pause());
+  videoObserver.disconnect(); inViewVideos.clear();
   gallery.replaceChildren();
-  visibleMemories.slice(0, shown).forEach((item, index) => {
+  visibleMemories.forEach((item, index) => {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'memory';
     button.style.setProperty('--rotation', `${[-2,2,-1,1.5][index%4]}deg`);
     button.style.animationDelay = `${Math.min(index,7) * 45}ms`;
     button.setAttribute('aria-label', `Open ${item.type === 'video' ? 'video' : 'photo'} ${index+1}: ${item.caption}`);
     const wrapper = document.createElement('span'); wrapper.className = 'memory-image';
-    const image = document.createElement('img'); image.src = item.poster || item.src; image.alt = ''; image.loading = 'lazy'; image.decoding = 'async'; wrapper.append(image);
-    if (item.type === 'video') { const play = document.createElement('span'); play.className = 'video-badge'; play.textContent = '▶'; play.setAttribute('aria-hidden','true'); wrapper.append(play); }
+    if (item.type === 'video') {
+      const video = document.createElement('video');
+      video.dataset.src = item.src; video.poster = item.poster;
+      video.muted = true; video.defaultMuted = true; video.loop = true;
+      video.playsInline = true; video.preload = 'none'; video.tabIndex = -1;
+      video.setAttribute('muted', ''); video.setAttribute('playsinline', '');
+      video.setAttribute('aria-hidden', 'true');
+      wrapper.append(video); videoObserver.observe(video);
+      const hint = document.createElement('span'); hint.className = 'video-sound-hint';
+      hint.textContent = 'Tap for sound ↗'; hint.setAttribute('aria-hidden', 'true'); wrapper.append(hint);
+      button.setAttribute('aria-label', `Open video ${index+1} with sound: ${item.caption}`);
+    } else {
+      const image = document.createElement('img'); image.src = item.src; image.alt = '';
+      image.loading = 'lazy'; image.decoding = 'async'; wrapper.append(image);
+    }
     const caption = document.createElement('span'); caption.className = 'memory-caption'; caption.textContent = item.caption;
     const number = document.createElement('span'); number.className = 'memory-number'; number.textContent = String(index+1).padStart(2,'0');
     button.append(wrapper,caption,number); button.addEventListener('click', () => { lastTrigger = button; openMemory(index); }); gallery.append(button);
   });
-  more.hidden = shown >= visibleMemories.length;
-  $('#gallery-status').textContent = `Showing ${Math.min(shown,visibleMemories.length)} of ${visibleMemories.length} memories.`;
+  $('#gallery-status').textContent = `Showing all ${visibleMemories.length} memories.`;
 }
 document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {
-  filter = button.dataset.filter; shown = 8;
+  filter = button.dataset.filter;
   document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed',String(b === button))); renderGallery();
 }));
-more.addEventListener('click', () => { const previous = shown; shown += 8; renderGallery(); gallery.children[previous]?.focus({ preventScroll: true }); });
 function renderMemory() {
   const item = visibleMemories[currentIndex], host = $('.dialog-media');
   host.querySelector('video')?.pause(); host.replaceChildren();
   const element = document.createElement(item.type === 'video' ? 'video' : 'img');
   element.src = item.src;
-  if (item.type === 'video') { element.controls = true; element.playsInline = true; element.preload = 'metadata'; element.poster = item.poster; }
+  if (item.type === 'video') { element.controls = true; element.playsInline = true; element.preload = 'auto'; element.poster = item.poster; element.muted = false; }
   else element.alt = item.caption;
-  host.append(element); $('.dialog-caption').textContent = `${item.caption} · ${currentIndex+1} / ${visibleMemories.length}`;
+  host.append(element);
+  if (item.type === 'video') element.play().catch(() => { /* Native controls offer retry. */ });
+  $('.dialog-caption').textContent = `${item.caption} · ${currentIndex+1} / ${visibleMemories.length}`;
 }
-function openMemory(index) { currentIndex = index; renderMemory(); if (!dialog.open) dialog.showModal(); document.body.style.overflow = 'hidden'; }
+function openMemory(index) { currentIndex = index; if (!dialog.open) dialog.showModal(); syncPreviews(); renderMemory(); document.body.style.overflow = 'hidden'; }
 function navigateMemory(direction) { currentIndex = (currentIndex + direction + visibleMemories.length) % visibleMemories.length; renderMemory(); }
 $('.dialog-close').addEventListener('click', () => dialog.close());
 $('.dialog-prev').addEventListener('click', () => navigateMemory(-1));
 $('.dialog-next').addEventListener('click', () => navigateMemory(1));
-dialog.addEventListener('close', () => { $('.dialog-media video')?.pause(); $('.dialog-media').replaceChildren(); document.body.style.overflow = ''; lastTrigger?.focus({ preventScroll: true }); });
+dialog.addEventListener('close', () => { $('.dialog-media video')?.pause(); $('.dialog-media').replaceChildren(); document.body.style.overflow = ''; syncPreviews(); lastTrigger?.focus({ preventScroll: true }); });
 dialog.addEventListener('click', e => { if(e.target === dialog) { const r = dialog.getBoundingClientRect(); if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dialog.close(); } });
 dialog.addEventListener('keydown', e => { if(e.target.tagName === 'VIDEO') return; if(e.key === 'ArrowRight') { e.preventDefault(); navigateMemory(1); } if(e.key === 'ArrowLeft') { e.preventDefault(); navigateMemory(-1); } });
 renderGallery();
