@@ -1,450 +1,154 @@
-import './style.css'
+import './style.css';
+import media from './src/media.json';
 
-// 1. Particle Background Animation
-const canvas = document.getElementById('particles-canvas');
+document.documentElement.classList.add('js');
+const $ = (selector) => document.querySelector(selector);
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+let effectsPaused = reducedMotion.matches;
+const motionButton = $('#motion-toggle');
+const canvas = $('#effects');
 const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let particlesArray = [];
-const numberOfParticles = 80; // Adjust for density
-
-class Particle {
-  constructor() {
-    this.x = Math.random() * canvas.width;
-    this.y = Math.random() * canvas.height;
-    this.size = Math.random() * 2 + 1;
-    this.speedX = Math.random() * 1 - 0.5;
-    this.speedY = Math.random() * 1 - 0.5;
-    this.color = Math.random() > 0.5 ? 'rgba(212, 175, 55, 0.4)' : 'rgba(232, 180, 184, 0.4)';
+let width = innerWidth, height = innerHeight, particles = [], stars = [], frame = 0, lastFrame = 0;
+const colors = ['#edb8c3', '#d6b780', '#fff1e6', '#b87991'];
+function resizeCanvas() {
+  width = innerWidth; height = innerHeight;
+  const ratio = Math.min(devicePixelRatio || 1, 2);
+  canvas.width = width * ratio; canvas.height = height * ratio;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  stars = Array.from({ length: width < 760 ? 24 : 48 }, () => ({ x: Math.random() * width, y: Math.random() * height, r: .5 + Math.random(), phase: Math.random() * 6 }));
+}
+function draw(time) {
+  frame = 0;
+  if (effectsPaused || document.hidden) return;
+  if (time - lastFrame < 30) { frame = requestAnimationFrame(draw); return; }
+  const dt = Math.min((time - lastFrame) / 16.7, 2.5); lastFrame = time;
+  ctx.clearRect(0, 0, width, height);
+  for (const star of stars) {
+    ctx.globalAlpha = .2 + (Math.sin(time / 1600 + star.phase) + 1) * .18;
+    ctx.fillStyle = '#d6b780'; ctx.beginPath(); ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2); ctx.fill();
   }
-  update() {
-    this.x += this.speedX;
-    this.y += this.speedY;
-    if (this.size > 0.2) this.size -= 0.005;
-    
-    // Bounce off edges
-    if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-    if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+  particles = particles.filter(p => p.life > 0 && p.y < height + 50);
+  for (const p of particles) {
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += p.gravity * dt; p.life -= dt; p.rotation += p.spin * dt;
+    ctx.save(); ctx.globalAlpha = Math.min(1, p.life / 25); ctx.translate(p.x, p.y); ctx.rotate(p.rotation); ctx.fillStyle = p.color;
+    if (p.spark) { ctx.beginPath(); ctx.moveTo(0,-p.size); ctx.lineTo(p.size*.3,-p.size*.3); ctx.lineTo(p.size,0); ctx.lineTo(p.size*.3,p.size*.3); ctx.lineTo(0,p.size); ctx.lineTo(-p.size*.3,p.size*.3); ctx.lineTo(-p.size,0); ctx.lineTo(-p.size*.3,-p.size*.3); ctx.closePath(); ctx.fill(); }
+    else ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * .6);
+    ctx.restore();
   }
-  draw() {
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  ctx.globalAlpha = 1; frame = requestAnimationFrame(draw);
 }
-
-function init() {
-  for (let i = 0; i < numberOfParticles; i++) {
-    particlesArray.push(new Particle());
-  }
+function syncMotion() {
+  document.body.classList.toggle('effects-paused', effectsPaused);
+  motionButton.textContent = effectsPaused ? 'Enable effects' : 'Pause effects';
+  motionButton.setAttribute('aria-pressed', String(effectsPaused));
+  if (effectsPaused || document.hidden) { cancelAnimationFrame(frame); frame = 0; particles = []; ctx.clearRect(0, 0, width, height); }
+  else if (!frame) { lastFrame = performance.now(); frame = requestAnimationFrame(draw); }
 }
-function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < particlesArray.length; i++) {
-    particlesArray[i].update();
-    particlesArray[i].draw();
-  }
-  requestAnimationFrame(animate);
+resizeCanvas(); syncMotion();
+addEventListener('resize', resizeCanvas, { passive: true });
+document.addEventListener('visibilitychange', syncMotion);
+motionButton.addEventListener('click', () => { effectsPaused = !effectsPaused; syncMotion(); });
+reducedMotion.addEventListener('change', e => { effectsPaused = e.matches; syncMotion(); });
+const petals = $('.petals');
+for (let i = 0; i < 10; i++) {
+  const petal = document.createElement('span'); petal.className = 'petal';
+  petal.style.cssText = `--left:${Math.random()*100}%;--duration:${16+Math.random()*14}s;--delay:${-Math.random()*30}s;--blur:${i % 3 === 0 ? 2 : 0}px`;
+  petals.append(petal);
 }
-init();
-animate();
-
-window.addEventListener('resize', () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  particlesArray = [];
-  init();
-});
-
-// 2. Typing Effect
-const textToType = "Happy Birthday, Beyonce!";
-const typingElement = document.getElementById('typing-text');
-let typingIndex = 0;
-
-function typeWriter() {
-  if (typingIndex < textToType.length) {
-    typingElement.innerHTML += textToType.charAt(typingIndex);
-    typingIndex++;
-    setTimeout(typeWriter, 120); // Typing speed
-  } else {
-    // Show hidden elements after typing finishes
-    document.querySelectorAll('.hero .hidden').forEach(el => el.classList.add('show'));
-  }
-}
-
-// Start typing when page loads
-window.onload = () => {
-  setTimeout(typeWriter, 500);
-}
-
-
-// 3. Intersection Observer for Scroll Animations
-const observerOptions = {
-  root: null,
-  rootMargin: '0px',
-  threshold: 0.1
-};
-
-const observer = new IntersectionObserver((entries, observer) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('show');
-      observer.unobserve(entry.target);
-    }
-  });
-}, observerOptions);
-
-document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-
-
-// 4. Lightbox Modal Logic
-const modal = document.getElementById('lightbox-modal');
-const modalContent = document.getElementById('modal-content');
-const closeModal = document.getElementById('close-modal');
-
-let allMediaItems = []; // Store all asset info for prev/next navigation
-let currentIndex = 0;
-
-function openLightbox(index) {
-  currentIndex = index;
-  renderModalMedia(index);
-  modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
-}
-
-function renderModalMedia(index) {
-  modalContent.innerHTML = '';
-  const { src, isVideo } = allMediaItems[index];
-
-  // Navigation arrows
-  const prevBtn = document.createElement('button');
-  prevBtn.className = 'nav-btn prev-btn';
-  prevBtn.innerHTML = '&#8249;';
-  prevBtn.onclick = (e) => { e.stopPropagation(); navigate(-1); };
-
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'nav-btn next-btn';
-  nextBtn.innerHTML = '&#8250;';
-  nextBtn.onclick = (e) => { e.stopPropagation(); navigate(1); };
-
-  if (isVideo) {
-    const video = document.createElement('video');
-    video.src = src;
-    video.controls = true;
-    video.autoplay = true;
-    video.playsInline = true;
-    video.style.maxWidth = '90vw';
-    video.style.maxHeight = '85vh';
-    modalContent.appendChild(prevBtn);
-    modalContent.appendChild(video);
-    modalContent.appendChild(nextBtn);
-  } else {
-    const img = document.createElement('img');
-    img.src = src;
-    img.alt = 'Beyonce memory';
-    modalContent.appendChild(prevBtn);
-    modalContent.appendChild(img);
-    modalContent.appendChild(nextBtn);
-  }
-
-  // Counter
-  const counter = document.createElement('div');
-  counter.className = 'modal-counter';
-  counter.textContent = `${index + 1} / ${allMediaItems.length}`;
-  modalContent.appendChild(counter);
-}
-
-function navigate(dir) {
-  currentIndex = (currentIndex + dir + allMediaItems.length) % allMediaItems.length;
-  renderModalMedia(currentIndex);
-}
-
-function closeLightbox() {
-  modal.classList.remove('active');
-  document.body.style.overflow = '';
-  modalContent.innerHTML = '';
-}
-
-closeModal.addEventListener('click', closeLightbox);
-modal.addEventListener('click', (e) => {
-  if (e.target === modal) closeLightbox();
-});
-document.addEventListener('keydown', (e) => {
-  if (!modal.classList.contains('active')) return;
-  if (e.key === 'Escape') closeLightbox();
-  if (e.key === 'ArrowRight') navigate(1);
-  if (e.key === 'ArrowLeft') navigate(-1);
-});
-
-
-// 5. Populate Gallery
-const assets = [
-  "(12).JPEG",
-  "0B28C981-7175-4756-969B-F155178FF90E.MOV",
-  "59FE3140-9A08-43AC-A01A-E46CE01D836A.jpeg",
-  "9638C49E-B4F1-4630-B597-D479F3245FAC.MOV",
-  "D602BBA0-CF70-4FA2-952B-D7C63E3E60DE.MOV",
-  "DSC00108.jpeg",
-  "FD902286-B1C6-4F32-854C-9BFA2C6CBB3A.MOV",
-  "Facetune88DAD31A-08EA-4F12-9E33-7CABCBA092DD.MOV",
-  "IMG_1241.jpeg",
-  "IMG_1277.JPG",
-  "IMG_1278.JPG",
-  "IMG_1446.JPG",
-  "IMG_1465.jpeg",
-  "IMG_1473.PNG",
-  "IMG_1684.jpeg",
-  "IMG_2067.jpeg",
-  "IMG_2242.jpeg",
-  "IMG_4569.MOV",
-  "IMG_5207.JPG",
-  "IMG_5210.JPG",
-  "IMG_6803.jpeg",
-  "IMG_7579.JPG",
-  "IMG_8072.JPG",
-  "IMG_9381.JPG",
-  "IMG_9484.JPG",
-  "IMG_9740.jpeg",
-  "RPReplay_Final1612534938.mov",
-  "cm-chat-media-video-1:f382dc0a-ac8f-509a-8e56-c4eb41193d29:9121:0:0.mov"
-];
-
-const galleryContainer = document.getElementById('gallery-container');
-
-assets.forEach((asset, index) => {
-  const isVideo = asset.toLowerCase().endsWith('.mov') || asset.toLowerCase().endsWith('.mp4');
-  const src = `/assets/${encodeURI(asset)}`;
-
-  allMediaItems.push({ src, isVideo });
-
-  const item = document.createElement('div');
-  item.classList.add('gallery-item', 'fade-in', 'hidden');
-  item.title = 'Click to view';
-
-  if (isVideo) {
-    const video = document.createElement('video');
-    video.src = src;
-    video.autoplay = true;
-    video.loop = true;
-    video.muted = true;
-    video.playsInline = true;
-    item.appendChild(video);
-  } else {
-    const img = document.createElement('img');
-    img.src = src;
-    img.alt = 'Beautiful memory';
-    item.appendChild(img);
-  }
-
-  // Click to open lightbox
-  item.addEventListener('click', () => openLightbox(index));
-
-  galleryContainer.appendChild(item);
-  observer.observe(item);
-});
-
-
-// ============================================================
-// SPECIAL EFFECTS
-// ============================================================
-
-// --- A. Cursor Sparkle Trail ---
-const sparkleCanvas = document.getElementById('sparkle-canvas');
-const sCtx = sparkleCanvas.getContext('2d');
-sparkleCanvas.width = window.innerWidth;
-sparkleCanvas.height = window.innerHeight;
-sparkleCanvas.classList.add('active');
-
-let sparkles = [];
-window.addEventListener('mousemove', (e) => {
-  for (let i = 0; i < 3; i++) {
-    sparkles.push({
-      x: e.clientX + (Math.random() - 0.5) * 20,
-      y: e.clientY + (Math.random() - 0.5) * 20,
-      size: Math.random() * 6 + 2,
-      alpha: 1,
-      color: Math.random() > 0.5 ? '#d4af37' : '#e8b4b8',
-      vx: (Math.random() - 0.5) * 2,
-      vy: -(Math.random() * 2 + 1),
-    });
-  }
-});
-
-function animateSparkles() {
-  sCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
-  sparkles = sparkles.filter(s => s.alpha > 0.01);
-  sparkles.forEach(s => {
-    s.x += s.vx;
-    s.y += s.vy;
-    s.alpha -= 0.04;
-    s.size *= 0.95;
-    sCtx.save();
-    sCtx.globalAlpha = s.alpha;
-    sCtx.fillStyle = s.color;
-    sCtx.shadowBlur = 8;
-    sCtx.shadowColor = s.color;
-    sCtx.beginPath();
-    // Draw a little star
-    for (let i = 0; i < 5; i++) {
-      const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-      const r = i % 2 === 0 ? s.size : s.size / 2;
-      i === 0 ? sCtx.moveTo(s.x + r * Math.cos(angle), s.y + r * Math.sin(angle))
-              : sCtx.lineTo(s.x + r * Math.cos(angle), s.y + r * Math.sin(angle));
-    }
-    sCtx.closePath();
-    sCtx.fill();
-    sCtx.restore();
-  });
-  requestAnimationFrame(animateSparkles);
-}
-animateSparkles();
-
-window.addEventListener('resize', () => {
-  sparkleCanvas.width = window.innerWidth;
-  sparkleCanvas.height = window.innerHeight;
-});
-
-
-// --- B. Confetti Explosion ---
-function launchConfetti() {
-  const colors = ['#d4af37', '#e8b4b8', '#ff8fab', '#fff', '#c084fc', '#67e8f9'];
-  for (let i = 0; i < 160; i++) {
-    const confetti = document.createElement('div');
-    confetti.style.cssText = `
-      position: fixed;
-      width: ${Math.random() * 10 + 6}px;
-      height: ${Math.random() * 6 + 4}px;
-      background: ${colors[Math.floor(Math.random() * colors.length)]};
-      left: ${Math.random() * 100}vw;
-      top: -10px;
-      border-radius: 2px;
-      z-index: 99999;
-      pointer-events: none;
-      opacity: 1;
-      transform: rotate(${Math.random() * 360}deg);
-    `;
-    document.body.appendChild(confetti);
-    const duration = Math.random() * 2000 + 1500;
-    const xDrift = (Math.random() - 0.5) * 300;
-    confetti.animate([
-      { transform: `translateY(0) translateX(0) rotate(0deg)`, opacity: 1 },
-      { transform: `translateY(110vh) translateX(${xDrift}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }
-    ], { duration, easing: 'cubic-bezier(0.25,0.46,0.45,0.94)', fill: 'forwards' })
-      .onfinish = () => confetti.remove();
-  }
-}
-
-
-// --- C. Floating Hearts ---
-function spawnHeart(x, y) {
-  const hearts = ['💖', '💕', '💗', '💓', '💝', '💘'];
-  const el = document.createElement('div');
-  el.className = 'floating-heart';
-  el.textContent = hearts[Math.floor(Math.random() * hearts.length)];
-  el.style.left = `${x + (Math.random() - 0.5) * 60}px`;
-  el.style.top = `${y}px`;
-  el.style.fontSize = `${Math.random() * 1.5 + 1}rem`;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2000);
-}
-
-// Spawn hearts randomly while on the page
-setInterval(() => {
-  const x = Math.random() * window.innerWidth;
-  const y = Math.random() * window.innerHeight;
-  spawnHeart(x, y);
-}, 800);
-
-
-// --- D. Fleeing "No" Button & Yes response ---
-const yesBtn = document.getElementById('yes-btn');
-const noBtn = document.getElementById('no-btn');
-const loveResponse = document.getElementById('love-response');
-
-// Position No button absolutely inside its parent
-const loveSection = document.getElementById('love-section');
-
-// Track No button position (viewport coords)
-let noBtnX = null;
-let noBtnY = null;
-
-function initNoBtnPosition() {
-  const rect = noBtn.getBoundingClientRect();
-  noBtnX = rect.left;
-  noBtnY = rect.top;
-  // Switch to fixed positioning so it can roam freely
-  noBtn.style.position = 'fixed';
-  noBtn.style.left = noBtnX + 'px';
-  noBtn.style.top = noBtnY + 'px';
-  noBtn.style.zIndex = '9996';
-}
-
-observer.observe(document.getElementById('love-section'));
-
-// Initialize No button position once the section is visible
-const loveObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      setTimeout(initNoBtnPosition, 600); // wait for fade-in
-      loveObserver.disconnect();
-    }
-  });
-}, { threshold: 0.3 });
-loveObserver.observe(document.getElementById('love-section'));
-
-const FLEE_RADIUS = 130; // px — how close before it flees
-const FLEE_DISTANCE = 220; // px — how far it jumps
-
-document.addEventListener('mousemove', (e) => {
-  if (noBtnX === null) return;
-
-  const btnCenterX = noBtnX + noBtn.offsetWidth / 2;
-  const btnCenterY = noBtnY + noBtn.offsetHeight / 2;
-  const dx = e.clientX - btnCenterX;
-  const dy = e.clientY - btnCenterY;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-
-  if (dist < FLEE_RADIUS) {
-    // Flee in the opposite direction
-    const angle = Math.atan2(dy, dx);
-    const fleeAngle = angle + Math.PI + (Math.random() - 0.5) * 0.8;
-    let newX = noBtnX - Math.cos(fleeAngle) * FLEE_DISTANCE;
-    let newY = noBtnY - Math.sin(fleeAngle) * FLEE_DISTANCE;
-
-    // Keep within viewport
-    newX = Math.max(0, Math.min(window.innerWidth - noBtn.offsetWidth - 10, newX));
-    newY = Math.max(0, Math.min(window.innerHeight - noBtn.offsetHeight - 10, newY));
-
-    noBtnX = newX;
-    noBtnY = newY;
-    noBtn.style.left = noBtnX + 'px';
-    noBtn.style.top = noBtnY + 'px';
-  }
-});
-
-// Also flee on touch (mobile)
-document.addEventListener('touchmove', (e) => {
-  const touch = e.touches[0];
-  if (!touch || noBtnX === null) return;
-  const fakeEvent = { clientX: touch.clientX, clientY: touch.clientY };
-  document.dispatchEvent(new MouseEvent('mousemove', fakeEvent));
+let lastPointer = 0;
+addEventListener('pointermove', e => {
+  if (effectsPaused || e.pointerType !== 'mouse' || performance.now() - lastPointer < 40) return;
+  lastPointer = performance.now();
+  if (particles.length < 240) particles.push({ x: e.clientX, y: e.clientY, vx: (Math.random()-.5)*.6, vy: -.6, gravity: 0, size: 2+Math.random()*3, life: 25, rotation: 0, spin: .02, spark: true, color: colors[Math.floor(Math.random()*3)] });
 }, { passive: true });
-
-// Yes button — big celebration
-yesBtn.addEventListener('click', (e) => {
-  launchConfetti();
-  // Spawn a burst of hearts from click point
-  for (let i = 0; i < 12; i++) {
-    setTimeout(() => spawnHeart(e.clientX, e.clientY), i * 80);
+let toastTimer;
+function toast(message) { $('#celebration-message').textContent = message; $('#celebration-message').classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('#celebration-message').classList.remove('visible'), 3400); }
+function celebrate(message = 'The world is a little brighter with you in it ♡') {
+  toast(message);
+  if (effectsPaused) return;
+  particles = particles.slice(-40);
+  for (let i = 0; i < 150; i++) {
+    const side = i % 2;
+    particles.push({ x: side ? width : 0, y: height * .75, vx: (side ? -1 : 1) * (2 + Math.random()*7), vy: -5-Math.random()*10, gravity: .16, size: 4+Math.random()*5, life: 130+Math.random()*50, rotation: Math.random()*6, spin: (Math.random()-.5)*.15, color: colors[i%4] });
   }
-  // Show the love response
-  loveResponse.textContent = '🥰 We knew it! We love you more, Beyonce! 💖';
-  loveResponse.classList.remove('hidden');
-  loveResponse.classList.add('show');
-  // Hide the buttons
-  yesBtn.style.transform = 'scale(1.3)';
-  yesBtn.style.boxShadow = '0 0 40px rgba(212,175,55,0.9)';
-  noBtn.style.display = 'none';
+}
+$('.celebrate-button').addEventListener('click', () => celebrate());
+const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } }), { threshold: .08 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+let scrollPending = false;
+function updateProgress() { const max = document.documentElement.scrollHeight - innerHeight; $('.reading-progress').style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`; scrollPending = false; }
+addEventListener('scroll', () => { if (!scrollPending) { scrollPending = true; requestAnimationFrame(updateProgress); } }, { passive: true });
+updateProgress();
+$('.portrait-scene').addEventListener('pointermove', e => { if (effectsPaused || e.pointerType !== 'mouse') return; const r = e.currentTarget.getBoundingClientRect(); $('.portrait').style.setProperty('--portrait-tilt', `${((e.clientX - r.left) / r.width - .5) * 5}deg`); });
+$('.portrait-scene').addEventListener('pointerleave', () => $('.portrait').style.setProperty('--portrait-tilt','0deg'));
+$('.envelope').addEventListener('click', () => {
+  const letter = $('#birthday-letter'); letter.classList.add('highlight');
+  letter.scrollIntoView({ behavior: effectsPaused ? 'instant' : 'smooth', block: 'center' });
+  setTimeout(() => letter.classList.remove('highlight'), 1800);
 });
+
+// All original memories, with lightweight previews and keyboard-accessible viewing.
+const captions = ['A little sunshine','Better together','That beautiful smile','Simply you','Our kind of happy','The silly days','My favorite moments','Always a little magic','A memory to keep','All the little things','A brighter day','Just being you'];
+const memories = media.map((item, id) => ({ ...item, id, caption: item.type === 'video' ? 'A moment in motion' : captions[id % captions.length] }));
+let filter = 'all', shown = 8, visibleMemories = memories, currentIndex = 0, lastTrigger;
+const gallery = $('#gallery'), more = $('#more-memories'), dialog = $('#lightbox');
+function renderGallery() {
+  visibleMemories = memories.filter(item => filter === 'all' || item.type === filter);
+  gallery.replaceChildren();
+  visibleMemories.slice(0, shown).forEach((item, index) => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'memory';
+    button.style.setProperty('--rotation', `${[-2,2,-1,1.5][index%4]}deg`);
+    button.style.animationDelay = `${Math.min(index,7) * 45}ms`;
+    button.setAttribute('aria-label', `Open ${item.type === 'video' ? 'video' : 'photo'} ${index+1}: ${item.caption}`);
+    const wrapper = document.createElement('span'); wrapper.className = 'memory-image';
+    const image = document.createElement('img'); image.src = item.poster || item.src; image.alt = ''; image.loading = 'lazy'; image.decoding = 'async'; wrapper.append(image);
+    if (item.type === 'video') { const play = document.createElement('span'); play.className = 'video-badge'; play.textContent = '▶'; play.setAttribute('aria-hidden','true'); wrapper.append(play); }
+    const caption = document.createElement('span'); caption.className = 'memory-caption'; caption.textContent = item.caption;
+    const number = document.createElement('span'); number.className = 'memory-number'; number.textContent = String(index+1).padStart(2,'0');
+    button.append(wrapper,caption,number); button.addEventListener('click', () => { lastTrigger = button; openMemory(index); }); gallery.append(button);
+  });
+  more.hidden = shown >= visibleMemories.length;
+  $('#gallery-status').textContent = `Showing ${Math.min(shown,visibleMemories.length)} of ${visibleMemories.length} memories.`;
+}
+document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {
+  filter = button.dataset.filter; shown = 8;
+  document.querySelectorAll('[data-filter]').forEach(b => b.setAttribute('aria-pressed',String(b === button))); renderGallery();
+}));
+more.addEventListener('click', () => { const previous = shown; shown += 8; renderGallery(); gallery.children[previous]?.focus({ preventScroll: true }); });
+function renderMemory() {
+  const item = visibleMemories[currentIndex], host = $('.dialog-media');
+  host.querySelector('video')?.pause(); host.replaceChildren();
+  const element = document.createElement(item.type === 'video' ? 'video' : 'img');
+  element.src = item.src;
+  if (item.type === 'video') { element.controls = true; element.playsInline = true; element.preload = 'metadata'; element.poster = item.poster; }
+  else element.alt = item.caption;
+  host.append(element); $('.dialog-caption').textContent = `${item.caption} · ${currentIndex+1} / ${visibleMemories.length}`;
+}
+function openMemory(index) { currentIndex = index; renderMemory(); if (!dialog.open) dialog.showModal(); document.body.style.overflow = 'hidden'; }
+function navigateMemory(direction) { currentIndex = (currentIndex + direction + visibleMemories.length) % visibleMemories.length; renderMemory(); }
+$('.dialog-close').addEventListener('click', () => dialog.close());
+$('.dialog-prev').addEventListener('click', () => navigateMemory(-1));
+$('.dialog-next').addEventListener('click', () => navigateMemory(1));
+dialog.addEventListener('close', () => { $('.dialog-media video')?.pause(); $('.dialog-media').replaceChildren(); document.body.style.overflow = ''; lastTrigger?.focus({ preventScroll: true }); });
+dialog.addEventListener('click', e => { if(e.target === dialog) { const r = dialog.getBoundingClientRect(); if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) dialog.close(); } });
+dialog.addEventListener('keydown', e => { if(e.target.tagName === 'VIDEO') return; if(e.key === 'ArrowRight') { e.preventDefault(); navigateMemory(1); } if(e.key === 'ArrowLeft') { e.preventDefault(); navigateMemory(-1); } });
+renderGallery();
+
+// Birthday surprises.
+const candle = $('#wish-button');
+candle.addEventListener('click', () => {
+  if (candle.classList.contains('wished')) return;
+  candle.classList.add('wished'); candle.setAttribute('aria-label','Your birthday wish has been made');
+  $('#wish-message').textContent = 'May every beautiful thing you wished for find its way to you. ♡'; $('#relight').hidden = false;
+  celebrate('A little wish, sent out into the universe ✦');
+});
+$('#relight').addEventListener('click', () => { candle.classList.remove('wished'); candle.setAttribute('aria-label','Make a wish and blow out the candle'); $('#wish-message').textContent = 'Close your eyes. Make a wish. Then tap the flame.'; $('#relight').hidden = true; candle.focus({ preventScroll: true }); });
+$('#yes-button').addEventListener('click', () => { $('#love-response').textContent = 'We knew it. We love you more, Beyonce! ♡'; $('#love-prompt').textContent = 'Always, and then a little more.'; $('#yes-button').textContent = 'Loved, endlessly ♡'; $('#think-button').hidden = true; celebrate('You are so, so loved ♡'); });
+let thinks = 0;
+$('#think-button').addEventListener('click', () => { const messages = ['Take your time. We already know our answer. ♡','Still here. Still loving you. ♡','Okay, one more little nudge… ♡']; $('#love-prompt').textContent = messages[thinks++ % messages.length]; if (!effectsPaused) $('#yes-button').animate([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}],{duration:500}); });
+
+// Keep the official audio iframe mounted when the compact player is closed.
+const musicToggle = $('#music-toggle'), soundtrack = $('.soundtrack'), musicPanel = $('#music-panel');
+function setMusicOpen(open) { soundtrack.classList.toggle('collapsed', !open); musicToggle.setAttribute('aria-expanded', String(open)); musicPanel.inert = !open; }
+musicToggle.addEventListener('click', () => setMusicOpen(musicToggle.getAttribute('aria-expanded') !== 'true'));
+setMusicOpen(false);

@@ -1,0 +1,122 @@
+[
+  {
+    "src": "/memories/photo-01.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-02.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-03.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-04.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-05.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-06.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-07.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-08.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-09.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-10.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-11.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-12.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-13.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-14.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-15.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-16.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-17.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-18.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-19.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/photo-20.webp",
+    "type": "photo"
+  },
+  {
+    "src": "/memories/film-01.mp4",
+    "poster": "/memories/film-01.webp",
+    "type": "video"
+  },
+  {
+    "src": "/memories/film-02.mp4",
+    "poster": "/memories/film-02.webp",
+    "type": "video"
+  },
+  {
+    "src": "/memories/film-03.mp4",
+    "poster": "/memories/film-03.webp",
+    "type": "video"
+  },
+  {
+    "src": "/memories/film-04.mp4",
+    "poster": "/memories/film-04.webp",
+    "type": "video"
+  },
+  {
+    "src": "/memories/film-05.mp4",
+    "poster": "/memories/film-05.webp",
+    "type": "video"
+  },
+  {
+    "src": "/memories/film-06.mp4",
+    "poster": "/memories/film-06.webp",
+    "type": "video"
+  },
+  {
+    "src": "/memories/film-07.mp4",
+    "poster": "/memories/film-07.webp",
+    "type": "video"
+  },
+  {
+    "src": "/memories/film-08.mp4",
+    "poster": "/memories/film-08.webp",
+    "type": "video"
+  }
+]
